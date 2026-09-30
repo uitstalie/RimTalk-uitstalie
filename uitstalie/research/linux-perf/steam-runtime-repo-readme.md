@@ -1,0 +1,374 @@
+> 来源: https://github.com/ValveSoftware/steam-runtime
+> 标题: ValveSoftware/steam-runtime repository README
+> 抓取: HTTP 200 | Content-Type: text/html; charset=utf-8 | 原始字节: 296390
+
+---
+
+Skip to content
+
+## Navigation Menu
+
+Sign in Appearance settings
+
+Search /
+
+Sign in
+Sign up Appearance settings
+
+You signed in with another tab or window. Reload to refresh your session.
+You signed out in another tab or window. Reload to refresh your session.
+You switched accounts on another tab or window. Reload to refresh your session.
+
+Dismiss alert
+
+{{ message }}
+
+ValveSoftware
+
+/
+
+steam-runtime
+
+Public
+
+-
+Notifications
+You must be signed in to change notification settings
+
+-
+Fork
+97
+
+-
+
+Star
+1.5k
+
+master
+
+Branches Tags
+
+Go to file
+
+Code Open more actions menu
+
+## Latest commit
+
+## History
+745 Commits
+745 Commits
+
+## Folders and files
+| Name | Name | Last commit message
+| Last commit date
+
+| .github/ ISSUE_TEMPLATE
+
+| .github/ ISSUE_TEMPLATE
+
+|
+|
+
+| doc
+
+| doc
+
+|
+|
+
+| templates
+
+| templates
+
+|
+|
+
+| tests
+
+| tests
+
+|
+|
+
+| .gitattributes
+
+| .gitattributes
+
+|
+|
+
+| .gitignore
+
+| .gitignore
+
+|
+|
+
+| COPYING
+
+| COPYING
+
+|
+|
+
+| Makefile
+
+| Makefile
+
+|
+|
+
+| README.md
+
+| README.md
+
+|
+|
+
+| build-runtime.py
+
+| build-runtime.py
+
+|
+|
+
+| setup_chroot.sh
+
+| setup_chroot.sh
+
+|
+|
+
+| ubuntu-archive-keyring.gpg
+
+| ubuntu-archive-keyring.gpg
+
+|
+|
+
+| write-manifest
+
+| write-manifest
+
+|
+|
+
+| View all files
+
+## Repository files navigation
+
+# Steam Runtime
+
+A binary compatible runtime environment for Steam applications on Linux.
+
+## Introduction
+
+The Linux version of Steam runs on many Linux distributions, ranging
+from the latest rolling-release distributions like Arch Linux to older
+LTS distributions like Ubuntu 16.04.
+To achieve this, it uses a special library stack, the Steam Runtime .
+
+The original version of the Steam Runtime is installed in
+~/.steam/root/ubuntu12_32/steam-runtime .
+This is Steam Runtime version 1, codenamed scout after the Team
+Fortress 2 character class.
+The Steam client itself is run in an environment that adds the shared
+libraries from Steam Runtime 1 'scout' to the library loading path,
+using the LD_LIBRARY_PATH environment variable:
+this is referred to as the LD_LIBRARY_PATH runtime .
+
+A newer approach to cross-distribution compatibility is to use Linux
+namespace (container) technology, to run games in a more predictable
+environment, even when running on an arbitrary Linux distribution which
+might be old, new or unusually set up.
+This is implemented as a series of Steam Play compatibility tools, and
+is referred to as the Steam container runtime , or as the
+Steam Linux Runtime .
+
+Newer native Linux games can run in an environment referred to as
+Steam Linux Runtime 4.0 ,
+which is a Steam Runtime 4 'steamrt4'
+container.
+This is the recommended environment for developers of new native Linux games,
+and developers of existing games can switch to it as part of a game update
+if desired.
+To target this environment,
+developers should compile their games in the
+steamrt4 SDK ,
+then set up a Launch Option that supports Linux,
+and use the Installation → Linux Runtime menu item in the Steamworks
+partner web interface to select the SLR 4.0 runtime.
+
+Steam Linux Runtime 3.0 (sniper) is an older runtime using a
+Steam Runtime 3 'sniper' container.
+To target this environment,
+developers should compile their games in the
+sniper SDK ,
+and use the Steamworks partner web interface to select the SLR 3.0 runtime.
+
+Older native Linux games normally run in an environment referred to as
+Steam Linux Runtime 1.0 (scout) , which is a
+Steam Runtime 2 'soldier' container combined with the
+Steam Runtime 1 'scout' LD_LIBRARY_PATH runtime .
+They can also be switched to run in an environment referred to as
+Legacy runtime 1.0 , which is the Steam Runtime 1 'scout' LD_LIBRARY_PATH
+runtime used on its own.
+To target either of these environments,
+developers should compile their games in the scout SDK .
+For backwards compatibility,
+this is still the default when a developer publishes a native Linux game,
+but we now recommend that developers should target steamrt4 instead.
+
+The Steam Runtime is also used by the Proton Steam Play compatibility
+tools, which run Windows games on Linux systems.
+The most recent versions of Proton (11 or newer) use the Steam Runtime 4
+container runtime.
+Proton 8, 9 and 10 use the Steam Runtime 3 'sniper' container runtime,
+while Proton 5.13, 6.3 and 7.0 use the
+Steam Runtime 2 'soldier' container runtime.
+The oldest versions of Proton (5.0 or earlier) use the legacy
+Steam Runtime 1 'scout' LD_LIBRARY_PATH runtime.
+
+More information about the
+LD_LIBRARY_PATH runtime and
+container runtime is available as part of the
+steam-runtime-tools documentation .
+
+## Reporting bugs and issues
+
+Please report issues to the steam-runtime issue tracker .
+
+The container runtimes have some known issues which do not need to be
+reported again.
+
+The container runtime is quite complicated, so we will need
+additional information to be able to make progress
+on resolving issues.
+
+## Installation
+
+Steam Runtime version 1, 'scout' is automatically installed as part
+of the Steam Client for Linux .
+
+Each version of the Steam container runtime is automatically
+downloaded to your Steam library if you install a game or a version of
+Proton that requires it.
+They can also be downloaded by opening steam:// links with Steam:
+
+- Steam Linux Runtime 1.0 (scout): steam steam://install/1070560
+
+- Steam Linux Runtime 2.0 (soldier): steam steam://install/1391110
+
+- Steam Linux Runtime 3.0 (sniper): steam steam://install/1628350
+
+- Steam Linux Runtime 4.0: steam steam://install/4183110
+
+All the software that makes up the Steam Runtime is available in both source and binary form in the Steam Runtime repository https://repo.steampowered.com/steamrt
+
+## Building in the runtime
+
+To prevent libraries from development and build machines 'leaking'
+into your applications, you should build within a Steam Runtime container.
+
+We recommend using a
+Toolbx ,
+Distrobox ,
+rootless Podman
+or Docker
+container for this.
+All of these environments are compatible with the official Steam Runtime
+SDK images,
+which we provide in OCI format.
+
+If targeting Steam Linux Runtime 4.0,
+please consult the
+Steam Runtime 4 SDK
+documentation for details.
+
+If targeting Steam Linux Runtime 3.0 'sniper',
+please consult the
+Steam Runtime 3 'sniper' SDK
+documentation instead.
+
+If targeting the legacy 'scout' runtime,
+please consult the
+Steam Runtime 1 'scout' SDK
+documentation instead.
+
+### Using a debugger in the build environment
+
+To get the detached debug symbols that are required for gdb and
+similar tools,
+please see the
+Steam Linux Runtime guide for game developers ,
+and more specifically the section about
+getting debug symbols .
+
+## Steam Runtime apt repositories
+
+Each Steam Runtime suite has an associated apt repository:
+
+- deb https://repo.steampowered.com/steamrt4/apt steamrt4 main contrib non-free
+
+- deb https://repo.steampowered.com/steamrt3/apt sniper main contrib non-free
+
+- deb https://repo.steampowered.com/steamrt2/apt soldier main contrib non-free
+
+- deb https://repo.steampowered.com/steamrt1/apt scout main
+
+These apt repositories are preconfigured in the SDK container images.
+
+A beta branch is also available for each suite.
+Please see the corresponding SDK documentation for more details.
+
+## Code in this repository
+
+This repository contains scripts for building local copies of the
+LD_LIBRARY_PATH Steam Runtime for testing.
+This is not usually necessary: using the official runtime is normally
+more appropriate.
+
+This repository also contains scripts for building Linux chroot
+environments suitable for building applications.
+These scripts are deprecated,
+and are not usually necessary.
+Using the official container-based SDKs (see above) is recommended.
+
+The container runtimes and the official container-based SDKs are not
+built using the scripts in this repository:
+instead,
+they are built using
+flatdeb-steam .
+It is not usually necessary for individual developers to rebuild these.
+Using the official container-based SDKs (see above) is recommended.
+
+## About
+A runtime environment for Steam applications
+
+### Resources
+Readme
+License
+Activity
+Custom properties
+
+### Stars
+1.5k stars
+
+### Watchers
+68 watching
+
+### Forks
+97 forks
+Report repository
+
+## Releases
+
+## Packages
+
+## Used by
+
+## Contributors
+
+## Languages
+
+You can’t perform that action at this time.

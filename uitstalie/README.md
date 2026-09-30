@@ -3,7 +3,12 @@
 本目录是 `RimTalk-uitstalie` fork 的**自有内容区**，与上游 RimTalk 代码**完全隔离**。
 上游文件（`About/`、`Defs/`、`Source/`、`RimTalk.csproj` 等）保持原样，便于同步上游更新。
 
-> 状态：**设计阶段**，尚无代码。设计见下。分支：`uitstalie-dev`
+> 状态：设计阶段，尚无 C# 代码。分支：`uitstalie-dev`
+
+## ⚠️ 接手本项目请先读
+
+**[`HANDOFF.md`](HANDOFF.md)** —— 接班说明：现在到哪一步、缺什么才能继续、具体怎么验证。
+然后是 [`preset/design/`](preset/design/) 下的设计文档。
 
 ---
 
@@ -12,9 +17,15 @@
 ```
 uitstalie/
 ├── README.md              本文
-├── preset/                预设交付物
-│   ├── design/            设计文档（见下表）
-│   └── （预设 JSON 待迁入）
+├── HANDOFF.md             ★ 接班说明（先读这个）
+├── preset/
+│   ├── DeepSeek Chat_preset.v2.json   预设交付物
+│   └── design/            设计文档（见下表）
+├── research/
+│   └── linux-perf/        Linux 性能/运行环境调研
+├── tools/
+│   ├── build_preset.ps1   构建 + 双重验证（断言全过才写盘）
+│   └── upstream/          原始预设（只读源）
 └── Source/                （待建）附加 mod 的 C# 代码
 ```
 
@@ -24,10 +35,12 @@ uitstalie/
 
 | 文件 | 内容 |
 |---|---|
-| `preset/design/addon-in-fork-design.md` | **本目录的架构设计**：隔离方式、项目配置、packageId、部署 |
+| `HANDOFF.md` | **接班说明**：现状、缺口、验证方法、别做的事 |
+| `preset/design/addon-in-fork-design.md` | **本目录的架构设计**：隔离方式、项目配置、packageId、部署、**Linux 构建缺口** |
 | `preset/design/variables-from-source.md` | **权威变量表**，从 RimTalk v1.3.2 源码直接抽取（非转述官方文档） |
 | `preset/design/template-comparison.md` | 我们的模板 vs 社区模板的优缺点对照 |
-| `preset/design/source-enhancement-design.md` | 源码增强候选 6 条 + 兼容性谱系（A/B/C/D 档） |
+| `preset/design/source-enhancement-design.md` | 增强候选 6 条 + 兼容性谱系 + **分层路线** |
+| `preset/design/rimsort-steam-proton-issues.md` | RimSort + Steam/Proton 问题调查 |
 | `preset/design/collected-suggestions.md` | 社区资料汇总（3 个 preset + 教程 + 讨论） |
 
 ---
