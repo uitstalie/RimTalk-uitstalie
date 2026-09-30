@@ -149,6 +149,32 @@ ls -d ~/.steam/steam/steamapps/compatdata/294100 2>/dev/null \
 - 检查角色档案应展开为真实姓名/特质，而非 `{{p.name}}` 原文
 - prompt 中出现 `Colony Status`、`Memory & Knowledge Context` **属正常**（扩展 mod 注入）
 
+### 3.6 Linux 性能调优的实测项
+
+调研已完成（见 `uitstalie/research/linux-perf/`，**先读 `FINDINGS.md`**）。
+两条结论：
+
+**已否定**：`MONO_GC_PARAMS` **对 RimWorld 无效**。三条证据链：
+① mono(1) 明说它是 **SGen** 专属参数；
+② 真实 Player.log 显示 RimWorld 用的是 **`MonoBleedingEdge`**（Boehm GC）；
+③ 有人实测报"does not seem to work"。**别再往这个方向花时间。**
+
+**待实测**：Boehm 的 `GC_*` 变量（`GC_INITIAL_HEAP_SIZE` 等）**是否被 Unity 读取，无官方说明**。
+最小成本判据（Steam 启动选项）：
+
+```
+GC_PRINT_STATS=1 %command%
+```
+
+- 日志出现 GC 统计 → 变量通道存在，可继续调堆大小
+- 无输出 → Unity 未透传该变量，方向作废
+
+前提核验（确认变量能否进入 sniper 容器）：
+
+```
+PRESSURE_VESSEL_SHELL=instead %command%
+```
+
 ---
 
 ## 4. 验证方法（可复现）

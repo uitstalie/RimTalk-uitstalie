@@ -1,69 +1,104 @@
 # linux-perf 资料说明
 
-> 本目录是 **RimWorld 在 Linux 上的性能/运行环境调研**归档。
-> 目标：不依赖"优化类 mod"（那些主要面向 Windows 测试），只收集系统层、运行时层、启动层手段。
+> RimWorld 在 Linux 上的**性能与运行环境**调研归档。
+> 只收集系统层、运行时层、启动层手段 —— **不涉及"优化类 mod"**
+> （那类 mod 主要面向 Windows 测试，Linux 走 Mono 运行时，作者假设可能不成立）。
 
 ---
 
-## 目录内容
+## 先看这个
 
 | 文件 | 内容 |
 |---|---|
-| `archwiki-improving-performance.md` | Arch Wiki 性能总纲（CPU governor、调度器等） |
-| `archwiki-cpu-frequency-scaling.md` | CPU 频率调节 |
-| `archwiki-nvidia.md` | NVIDIA 专有驱动相关 |
-| `archwiki-kde.md` | KDE 相关 |
-| `archwiki-wayland.md` | Wayland 相关 |
-| `archwiki-steam.md` | Steam 客户端 |
-| `archwiki-steam-troubleshooting.md` | Steam 排障 |
-| `nvidia-580.126.18-opengl-env-variables.md` | 与用户驱动版本一致的 OpenGL 环境变量 |
-| `nvidia-tweaks-environment-variables.md` | NVIDIA 调优环境变量 |
-| `feral-gamemode-readme.md` | Feral GameMode（`gamemoderun`） |
-| `mono-1-manpage-debian.md` / `mono-1-manpage-mankier.md` | Mono 运行时 manpage |
-| `mono-sgen-garbage-collector.md` | **SGen GC 文档** —— Mono GC 调优核心依据 |
+| **`FINDINGS.md`** | **结论提炼**：哪些能确定、哪些需实测、怎么测 |
+| `_SOURCES.md` | 全部来源索引 + 抓不到正文的有价值页面清单 |
+| `README.md` | 本文 |
+
+**`FINDINGS.md` 的核心是两条**：
+
+1. **`MONO_GC_PARAMS` 对 RimWorld 无效**（三条证据链，见该文件 §1）—— 否定一个常被误传的方向
+2. **`GC_*`（Boehm）变量是否被 Unity 读取，无官方说明** —— 是"可测方向"而非"确定方案"，
+   实测判据见该文件 §5.1
+
+---
+
+## 本目录收录内容
+
+按"是否有决策价值"精选。**完整 86 份正文在工作区**（见下节）。
+
+### 运行时 / GC
+
+| 文件 | 价值 |
+|---|---|
+| `bdwgc-docs-environment.md` | **Boehm `GC_*` 变量权威全表**（RimWorld 用的就是 Boehm） |
+| `bdwgc-docs-gcdescr.md` / `bdwgc-docs-scale.md` / `bdwgc-docs-debugging.md` / `bdwgc-gc.man.md` | Boehm GC 设计、伸缩、调试 |
+| `mono-1-manpage-mankier.md` / `mono-1-manpage-debian.md` | mono(1) —— **`MONO_GC_PARAMS` 归 SGen 的出处** |
+| `mono-sgen-garbage-collector.md` | SGen 文档（用于对照，非 RimWorld 所用） |
 | `mono-runtime-docs-index.md` | Mono 运行时文档索引 |
-| `unity-2022.3-managed-memory.md` | Unity 托管内存 |
-| `unity-2022.3-performance-garbage-collector.md` | **Unity GC 性能** |
-| `unity-2022.3-player-command-line-arguments.md` | Unity 播放器命令行参数 |
+
+### Unity
+
+| 文件 | 价值 |
+|---|---|
+| `unity-2022.3-performance-garbage-collector.md` | Unity 2022.3 GC 性能 |
+| `unity-2022.3-managed-memory.md` | 托管内存 |
+| `unity-2022.3-player-command-line-arguments.md` | 播放器命令行参数 |
 | `unity-current-player-command-line-arguments.md` / `unity-command-line-arguments.md` | 同上，其他来源 |
-| `steam-runtime-repo-readme.md` | Valve Steam Runtime 仓库说明 |
-| `triple-aye-steam-runtime-fun.md` | Steam Runtime 相关讨论 |
-| `kde-discuss-wayland-vs-x-benchmarks.md` | Wayland vs X11 基准（仅 368 字节，内容少） |
-| **`rimsort-steam-proton-issues.md`** | **RimSort + Steam/Proton 问题调查**（本项目自产，含用户崩溃成因定位） |
-| `proton-and-mono/` | Proton 与 Mono 调优的第二路调研（**进行中**） |
+| `unity-discussions-mono_gc_params-max-heap-size.md` | **"MONO_GC_PARAMS 未生效"的实测报告** |
+
+### Steam Runtime（sniper）
+
+通过 GitLab API v4 取得（网页与 `/-/raw/` 被 Anubis 反爬挡住）：
+
+| 文件 | 价值 |
+|---|---|
+| `slr-runtime-sniper-README.md` | sniper 适用范围：**原生 Linux 游戏**与 Proton 8.0+ |
+| `slr-sniper-release-notes.md` / `slr-sniper-release-notes-2025.md` | 逐次发布说明 |
+| `slr-steamrt-README.md` | steamrt 总览 |
+| `steam-runtime-repo-readme.md` | Valve 仓库说明 |
+| `triple-aye-steam-runtime-fun.md` | 实践讨论 |
+
+### 运行证据（第一手）
+
+| 文件 | 价值 |
+|---|---|
+| **`rimworld-playerlog-hugslib-gist.md`** | **真实 Linux 原生 RimWorld 1.6 Player.log 全文** —— 证实 Unity `2022.3.35f1`、`MonoBleedingEdge` 路径、`-disable-compute-shaders`、`vsync count 1` |
+
+### 系统层
+
+`archwiki-improving-performance.md` · `archwiki-cpu-frequency-scaling.md` ·
+`archwiki-nvidia.md` · `archwiki-wayland.md` · `archwiki-kde.md` ·
+`archwiki-steam.md` · `archwiki-steam-troubleshooting.md` ·
+`nvidia-580.126.18-opengl-env-variables.md`（与用户驱动版本一致） ·
+`nvidia-tweaks-environment-variables.md` · `feral-gamemode-readme.md`
+
+### 本项目自产
+
+`rimsort-steam-proton-issues.md` —— RimSort + Steam/Proton 问题调查
+（用户崩溃成因：RimSort #2026，Proton 下配置目录在 prefix 内）
 
 ---
 
-## 未提交的内容与原因
+## 未纳入仓库的内容
 
-为控制仓库体积，以下**未纳入仓库**（仅在原始工作区存在）：
+**完整 86 份正文在工作区** `research/linux-perf/`（未收录 51 份，约 888 KB），
+多为同名主题的其他来源副本。用户会另行打包整个工作区，故不会丢失。
 
-| 内容 | 体积 | 排除原因 |
-|---|---|---|
-| `proton-and-mono/_raw/` 下的网页 dump | ~2.2 MB | 抓取原始 HTML/JSON，非提炼产物；需要时可按 `_SOURCES` 重新抓取 |
-| `-upcoming-game-WARDOGS-…` 网页 dump | 79 KB | **与 RimWorld 无关**，抓取跑偏 |
-| `github-bbradson_Performance-Fish-38.md` | 4.3 KB | **超范围**：Performance-Fish 是"优化类 mod"，已明确指示不调研此类 |
-| `github.com_MrXploisLite_RimModManager…` | 415 KB | 是 **RimModManager**（另一款 mod 管理器），非 RimSort |
-
-> 若后续需要这些原始件，可在开发机上从原工作区取；切勿误以为它们不存在。
+未纳入的主要原因：内容与已收录项重复，或属发行版特异性资料且未在本项目场景中用到。
 
 ---
 
-## 待补
+## 本轮明确没拿到的资料（勿臆测内容）
 
-第二路调研（Proton 与 Mono，`proton-and-mono/`）在本目录提交时**尚未完成**，
-其结构化总结（`_SOURCES.md` / `_FETCH-LOG.md`）缺失。接手者若需要，可：
-1. 在开发机上查看原工作区 `research/linux-perf/proton-and-mono/`
-2. 或按 `_raw/` 中的 URL 记录重新抓取
+被 Cloudflare 拦截（403）：
 
----
+- **Ludeon 官方论坛**（含 topic 59118 "Linux and game performance"）
+- **RimWorld Wiki**（含 `api.php`、`action=raw`）
+- Stack Overflow、KDE Community Wiki
 
-## 与项目的关系
+连接超时：`steamcommunity.com`、`reddit.com`、`archive.org`（无法用快照绕 CF）
 
-本项目交付物（预设 JSON + 增强 mod）**不受运行方式切换影响**：
+**后果**：RimWorld 官方与社区侧的 Linux 性能表述**本轮完全没拿到**，
+URL 已记入 `_SOURCES.md`。若需这些内容须另设手段。
 
-- 预设是纯 JSON，原生 Linux 与 Proton 通用
-- 增强 mod 是 `net48` IL 程序集，Mono 与 Proton 均可加载
-
-故本目录的调研主要用于**游戏内验证环境**与**构建环境**的准备，
-而非改变交付物本身。相关约束见 `../../preset/design/addon-in-fork-design.md` §9。
+Fedora KDE 44 的发行版特异性资料同样未拿到（RPM Fusion、KDE Community Wiki 均被反爬）。
