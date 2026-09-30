@@ -156,10 +156,17 @@ ls -d ~/.steam/steam/steamapps/compatdata/294100 2>/dev/null \
 
 **已否定**：`MONO_GC_PARAMS` **对 RimWorld 无效**。三条证据链：
 ① mono(1) 明说它是 **SGen** 专属参数；
-② 真实 Player.log 显示 RimWorld 用的是 **`MonoBleedingEdge`**（Boehm GC）；
+② **Unity 2022.3 官方手册明说 "Unity's garbage collector uses the Boehm–Demers–Weiser
+garbage collector"**（`research/linux-perf/unity-2022.3-incremental-garbage-collection.md:166`），
+而 SGen 与 Boehm 是互斥的两套实现；
 ③ 有人实测报"does not seem to work"。**别再往这个方向花时间。**
 
+> ⚠️ 证据②早前版本我误写为「Player.log 里 `MonoBleedingEdge` 目录名 ⇒ Boehm」——
+> **那个推断不成立**（`monoBleedingEdge` 是 Mono 分支名，与 GC 实现无关）。
+> 已改用 Unity 官方文档。
+
 **待实测**：Boehm 的 `GC_*` 变量（`GC_INITIAL_HEAP_SIZE` 等）**是否被 Unity 读取，无官方说明**。
+但比 `MONO_GC_PARAMS` 乐观 —— `GC_*` 是 Boehm 库在 `GC_init` 时读的，**与静态/动态链接无关**。
 最小成本判据（Steam 启动选项）：
 
 ```
@@ -174,6 +181,9 @@ GC_PRINT_STATS=1 %command%
 ```
 PRESSURE_VESSEL_SHELL=instead %command%
 ```
+
+**另一条已知事实**：Ludeon 官方唯一启动参数是 `-disable-compute-shaders`（三平台一致），
+**官方未传任何 GC 参数** —— 来源见 `research/linux-perf/proton-and-mono/_NOTES-steam-launch-config.md`。
 
 ---
 

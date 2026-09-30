@@ -77,6 +77,24 @@
 `rimsort-steam-proton-issues.md` —— RimSort + Steam/Proton 问题调查
 （用户崩溃成因：RimSort #2026，Proton 下配置目录在 prefix 内）
 
+### `proton-and-mono/` 子目录
+
+第二路调研（Proton 路线 + Mono 调优）。**关键项**：
+
+| 文件 | 价值 |
+|---|---|
+| **`_NOTES-steam-launch-config.md`** + `steamcmd-info-294100.json` | **官方启动参数**（SteamCMD 元数据）：Linux `start_RimWorld.sh`、Windows `RimWorldWin64.exe`，**唯一参数 `-disable-compute-shaders`，无任何 GC 参数** |
+| `unity-2022.3-incremental-garbage-collection.md` | **Unity 官方明说用 Boehm GC** —— 否定 `MONO_GC_PARAMS` 的关键证据 |
+| `proton-valve-readme-main.md` | Proton 官方 README（`PROTON_*` / `STEAM_COMPAT_*` 全表） |
+| `mono-manpage-manpage.me.md` | mono(1) 全文（`MONO_GC_PARAMS` 参数表另一来源） |
+| `unity-2022.3/6000.0-player-command-line-arguments.md` | 证实**不存在 `-gc-*` / `-force-gc-*` 参数** |
+| `github-RimSort_RimSort-2026.md` / `-2102.md` | 根因 issue（open）与其配套 PR |
+| `_HANDOFF.md` | 该子目录的交接说明（含两处未完成项） |
+
+**该子目录未收录**：`_raw/`（55 个原始 dump）、`_tools/`（抓取脚本）、
+大量 Lemmy 帖与搜索 JSON dump、`github-bbradson_Performance-Fish-38.md`
+（超范围：Performance-Fish 是优化 mod）。**这些仍完整保留在工作区。**
+
 ---
 
 ## 未纳入仓库的内容

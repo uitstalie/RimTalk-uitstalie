@@ -6,36 +6,41 @@
 
 ---
 
-## 1. 最重要的否定结论：`MONO_GC_PARAMS` 对 RimWorld 无效
+## 1. `MONO_GC_PARAMS` 对 RimWorld 无效
 
-这是网上常被误传的方向。**三条证据链否定它**：
+这是网上常被误传的方向。**三条证据链**：
 
 **证据一：`MONO_GC_PARAMS` 是 SGen 专有参数**
 
-`mono(1)` manpage（本轮已抓，`mono-1-manpage-mankier.md:374`）原文：
+`mono(1)` manpage（已抓，`mono-1-manpage-mankier.md:374`）原文：
 
 > `MONO_GC_PARAMS` — **When using Mono with the SGen garbage collector**
 > this variable controls several parameters of the collector.
 
-**证据二：RimWorld 用的是 Boehm GC，不是 SGen**
+**证据二：Unity 用的是 Boehm GC，不是 SGen** ← **关键证据**
 
-真实 Linux 原生 Player.log 全文（`rimworld-playerlog-hugslib-gist.md`）：
+Unity 2022.3 官方手册（已抓，`unity-2022.3-incremental-garbage-collection.md:166`）原文：
 
-```
-Mono config path = '[Rimworld_dir]/RimWorldLinux_Data/MonoBleedingEdge/etc'
-```
+> **Unity's garbage collector uses the Boehm–Demers–Weiser garbage collector.**
+> By default, Unity uses it in **incremental mode**
 
-**`MonoBleedingEdge`** 即 Unity 内嵌的 Mono 发行目录名，配 **Boehm GC**。
-SGen 是另一套，不在这个路径下。
+且 SGen 与 Boehm 是**互斥的两套实现** —— SGen 文档标题即
+「SGen garbage collector (**comparison to Boehm**)」，正文明确
+*"Unlike Boehm, SGen has the liberty to move objects around"*。
 
 **证据三：有人实测无效**
 
-Unity 讨论帖（本轮已抓，`unity-discussions-mono_gc_params-max-heap-size.md`）：
+Unity 讨论帖（已抓，`unity-discussions-mono_gc_params-max-heap-size.md`）：
 
 > running "set MONO_GC_PARAMS max-heap-size=4G" then Unity from the commandline,
 > **does not seem to work**
 
 **结论**：不要花时间在 `MONO_GC_PARAMS` 上。
+
+> ⚠️ **勘误记录**：本文档早前版本把证据二写成了「Player.log 中 `MonoBleedingEdge`
+> 目录名 ⇒ Boehm GC」。**那个推断不成立** —— `monoBleedingEdge` 是 Mono 的分支名，
+> 指运行时本身，与用哪个 GC 无关。已改用 Unity 官方文档作为证据。
+> （另一子代理正确指出了该推断的漏洞。）
 
 ---
 
@@ -55,15 +60,24 @@ RimWorld 用的是 Boehm GC，其变量表在 **bdwgc 官方**
 
 支持 `k` / `M` / `G` 后缀，如 `GC_INITIAL_HEAP_SIZE=1G`。
 
-### ⚠️ 关键空缺：Unity 是否读取这些变量，**无官方说明**
+### 可行性评估：**比 `MONO_GC_PARAMS` 乐观，但仍需实测确认**
 
-本轮回调明确记录（见 `_SOURCES.md` §7）：
+**支持的理由**：`GC_*` 是 **Boehm 库自身**在 `GC_init` 时读取的环境变量，
+属库的**运行时行为**，与其被静态还是动态链接**无关**。既然已确认 Unity 用 Boehm
+（§1 证据二），这些变量**在理论上就有被读取的基础**。
 
-> 没找到 Unity 官方关于「Player 是否读取 `MONO_GC_PARAMS` / `GC_*`」的说明；
-> 现有证据只有 bdwgc 侧变量表、mono(1) 把 `MONO_GC_PARAMS` 归给 SGen、
-> 以及一条用户报告"在 Unity 下未生效"。
+**但仍有不确定**：
 
-**故这是"可测方向"而非"确定方案"**。实测方法见 §5。
+- Unity **未在任何官方文档中说明**是否透传 `GC_*`（已检索 Unity 2022.3 与 6000.x 手册）
+- Boehm 部分变量受**编译期宏**约束（如 `GC_COLLECT_AT_MALLOC` 须该宏已定义才生效），
+  而 Unity 是否启用了这些宏未知
+- 最硬的证据仍缺：**没有 Unity 官方或可复现的实测记录**表明 `GC_*` 在 Unity 播放器下生效
+
+**故结论是：这是值得优先实测的方向**（判据见 §5.1），
+但**在实测出结果前不要当成既定方案**。
+
+> 与 §1 的区别：`MONO_GC_PARAMS` 是**已被证否**（SGen 专属，Unity 不用 SGen）；
+> `GC_*` 是**未证否也未经证实** —— 通道理论上存在，但无实测记录。
 
 ---
 
@@ -99,10 +113,31 @@ Default vsync count 1
 [PhysX] Initialized MultithreadedTaskDispatcher with 16 workers
 ```
 
-**值得注意**：该日志中**已经带了 `-disable-compute-shaders`**。
-这可能是 Ludeon 官方的默认启动参数，也可能是玩家自己加的 —— 需与本机实际启动项核对。
+**关于 `-disable-compute-shaders`**：另一子代理从 SteamCMD 元数据
+（`proton-and-mono/steamcmd-info-294100.json`，源 `api.steamcmd.net/v1/info/294100`）
+查到，**这是 Ludeon 官方唯一的启动参数，且三平台一致**：
+
+| 平台 | 启动项 | 官方启动参数 |
+|---|---|---|
+| Linux | `start_RimWorld.sh` | `-disable-compute-shaders` |
+| Windows | `RimWorldWin64.exe` | `-disable-compute-shaders` |
+
+即**官方未传任何 GC 参数** —— 与 §1 的结论一致（`MONO_GC_PARAMS` 那条路本来也没开）。
 
 `vsync count 1` 意味着垂直同步开启。若显示器为 144Hz 而游戏帧率受限，此项值得审视。
+
+### 4.1 两种运行方式的可执行文件（同一份 SteamCMD 元数据）
+
+| 方式 | 启动项 | Unity 数据目录 |
+|---|---|---|
+| 原生 Linux | `start_RimWorld.sh` | `RimWorldLinux_Data/` |
+| Proton | `RimWorldWin64.exe` | `RimWorldWin64_Data/` |
+
+且 `appdetails` 返回 `platforms.linux = true` —— **RimWorld 有官方原生 Linux 版**，
+Steam 默认启动原生版；**走 Proton 必须手动开启"强制使用 Steam Play 兼容性工具"**。
+
+ProtonDB 聚合数据（`proton-and-mono/`）：`tier=platinum`、`score=0.91`、`total=221`、`confidence=strong`
+（逐条报告抓不到，纯前端 JS）。**未取到任何"Proton 快于/慢于原生"的定量对比。**
 
 ---
 
