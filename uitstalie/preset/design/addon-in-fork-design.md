@@ -178,3 +178,114 @@ uitstalie/
 3. 决定方案 A（改上游 2 行 glob）还是方案 B（放仓库外）
 4. 明确 `GameVersion` 属性取值（上游 csproj 用了 `$(GameVersion)`，需看默认值）
 5. 决定预设/文档目录是否也纳入本仓库（用户意向是纳入）
+
+---
+
+## 9. Linux 构建问题
+
+### 9.1 运行方式（已确认）
+
+用户实际使用 **Steam Runtime Linux 1.0（sniper）原生 Linux** 运行，非 Proton。
+故游戏数据目录为 `RimWorldLinux_Data`：
+
+```
+~/.local/share/Steam/steamapps/common/RimWorld/RimWorldLinux_Data/Managed/
+```
+
+（历史 Player.log 的 `Mono path[0]` 亦证实为 `RimWorldLinux_Data`）
+
+### 9.2 上游 csproj 的 Linux 缺口
+
+`RimTalk.csproj` 全文**无 `Linux` 字样**，只有 Windows 与 **macOS** 两条路径：
+
+```xml
+<HintPath Condition=" '$(OS)' == 'Windows_NT' ">…\RimWorldWin64_Data\Managed\Assembly-CSharp.dll</HintPath>
+<HintPath Condition=" '$(OS)' != 'Windows_NT' ">…/RimWorldMac.app/Contents/Resources/Data/Managed/Assembly-CSharp.dll</HintPath>
+```
+
+`'$(OS)' != 'Windows_NT'` 把 **macOS 与 Linux 混为一谈**，这是缺陷根源。
+
+### 9.3 但 Mac 路径可完全绕开（重要）
+
+那两条路径**是有条件的**：
+
+```xml
+<ItemGroup Condition=" '$(UseLocalDlls)' == 'true' AND '$(RimWorldDir)' != '' ">
+```
+
+而 `RimWorldDir` 来自环境变量：
+
+```xml
+<RimWorldDir Condition=" '$(RimWorldDir)' == '' ">$(RIMWORLD_DIR)</RimWorldDir>
+```
+
+**默认未设置时为空的字符串**，于是：
+
+| 条件 | 结果 |
+|---|---|
+| **不设 `RIMWORLD_DIR`** | 走 `Krafs.Rimworld.Ref` NuGet 参考程序集；`UseLocalDlls` 分支与部署目标**全部跳过** → **构建可成功** |
+| 设 `RIMWORLD_DIR` + `UseLocalDlls=true` | 去找 `RimWorldMac.app` → **报错** |
+| 设 `RIMWORLD_DIR`（未设 UseLocalDlls） | 参考程序集走 NuGet；但部署目标会跑 `MacDeploy` → **失败** |
+
+**结论：在 Fedora 上构建只需不设 `RIMWORLD_DIR`**，编译后手动把
+`1.6/Assemblies/RimTalk.dll` 拷到游戏 Mods 目录即可。无需改上游 csproj。
+
+> 注意 `DeployToModsFolder` 的 `Condition` 引用 `$(BuildingWithScript)`，
+> 但**全仓库无任何地方设置该属性**（已检索确认），故它实际只受 `RimWorldDir` 控制。
+
+### 9.4 NuGet 参考程序集可用性（已核实）
+
+| 包 | 状态 |
+|---|---|
+| `Krafs.Rimworld.Ref` | **376 个版本**，含 `1.6.4850`、`1.6.4871`（稳定）与多个 `-beta` |
+| `Lib.Harmony.Ref` | 11 个版本，含 `2.4.2` |
+
+csproj 用的是 `Version="$(GameVersion).*-*"` 且 `GameVersion` 默认 `1.6`，
+即解析为 `1.6.*-*`，可命中上述版本。**故 Linux 上无需游戏本体即可编译。**
+
+### 9.5 工具链要求（Fedora 侧，待核实）
+
+目标框架 `net48` + `PlatformTarget x64`。Linux 上构建需三选一：
+
+| 方案 | 说明 |
+|---|---|
+| **Mono + msbuild** | Fedora 传统做法：`dnf install mono-devel msbuild` |
+| `dotnet build` + 参考程序集 | 需 `Microsoft.NETFramework.ReferenceAssemblies` 提供 net48 targeting pack |
+| Windows 交叉编译 | 产出 IL 程序集，Mono 可直接运行 |
+
+**待用户提供 Fedora 上的实际环境**：
+
+```bash
+dotnet --list-sdks
+mono --version
+msbuild -version
+ls ~/.local/share/Steam/steamapps/common/RimWorld/
+ls ~/.config/unity3d/Ludeon\ Studios/RimWorld\ by\ Ludeon\ Studios/Mods/
+```
+
+### 9.6 Linux 下的 Mods 目录
+
+RimWorld 各平台 Mods 路径不同，Linux 通常为：
+
+```
+~/.config/unity3d/Ludeon Studios/RimWorld by Ludeon Studios/Mods/
+```
+
+**需在 Fedora 上实际确认**（可能有版本差异）。
+
+### 9.7 对附加 mod 的建议
+
+我们自己写 `RimTalk.Uitstalie.csproj` 时：
+
+1. **不依赖 `RIMWORLD_DIR`** —— 用 `Krafs.Rimworld.Ref`，保持跨平台
+2. 若确需本地 DLL，用 `$([MSBuild]::IsOSPlatform('Linux'))` 分支，
+   而非 `'$(OS)' != 'Windows_NT'`（后者把 macOS 与 Linux 混为一谈）
+3. 部署选做且平台分明；默认**不自动部署**，避免在非目标平台构建失败
+
+### 9.8 对验证脚本的影响
+
+`uitstalie/tools/build_preset.ps1` 是 PowerShell 7 脚本，用 `Add-Type` 加载
+`Libs/Scriban.dll` 做模板渲染实测。Linux 上需装 `pwsh`；
+`Add-Type` 加载该 DLL 在 .NET (Core) 下的行为**待实测**。
+
+

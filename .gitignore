@@ -24,6 +24,4 @@ CLAUDE.md
 # 构建产物（上游规则已覆盖全局 obj/ bin/，此处仅作显式补充）
 uitstalie/**/bin/
 uitstalie/**/obj/
-# 预设构建产物：可复现生成，只跟踪源与文档
-uitstalie/preset/*.v2.json
 uitstalie/preset/**/*.log

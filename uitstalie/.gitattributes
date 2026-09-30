@@ -1,10 +1,14 @@
 # uitstalie fork: 自有内容的换行与二进制约定
-# 避免 core.autocrlf=true 把文档转成 CRLF 而产生的换行噪音
+# 目的：避免 core.autocrlf=true 造成换行噪音与产物哈希漂移
 
-# 文档一律用 LF
-*.md   text eol=lf
-*.json text eol=lf
-*.ps1  text eol=lf
+# 文档用 LF
+*.md text eol=lf
 
-# 预设 JSON 含 UTF-8 BOM，按文本处理但不做换行转换
-uitstalie/preset/*.json text eol=lf
+# 脚本用 LF
+*.ps1 text eol=lf
+
+# 预设 JSON：按二进制处理，禁止任何换行转换。
+# 原因：它是 tools/build_preset.ps1 的生成物，必须与脚本输出逐字节一致
+# （脚本输出为 CRLF + UTF-8 BOM）。若允许规范化，提交版与生成版哈希会不同。
+uitstalie/preset/*.json -text
+uitstalie/tools/upstream/*.json -text
