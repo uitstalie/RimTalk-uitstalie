@@ -1,0 +1,10 @@
+# uitstalie fork: 自有内容的换行与二进制约定
+# 避免 core.autocrlf=true 把文档转成 CRLF 而产生的换行噪音
+
+# 文档一律用 LF
+*.md   text eol=lf
+*.json text eol=lf
+*.ps1  text eol=lf
+
+# 预设 JSON 含 UTF-8 BOM，按文本处理但不做换行转换
+uitstalie/preset/*.json text eol=lf
