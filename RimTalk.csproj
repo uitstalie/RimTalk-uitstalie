@@ -25,13 +25,15 @@
     <!-- Release build configuration -->
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
         <Optimize>false</Optimize>
-        <DebugSymbols>true</DebugSymbols>
+        <DebugType>none</DebugType>
+        <DebugSymbols>false</DebugSymbols>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Lib.Harmony.Ref" Version="2.*" PrivateAssets="All"/>
-        <PackageReference Include="IndexRange" Version="1.0.3" />
+        <Reference Include="System.Net.Http" Private="false" />
+        <PackageReference Include="Lib.Harmony.Ref" Version="2.*" PrivateAssets="all"/>
+        <PackageReference Include="PolySharp" Version="1.16.0" PrivateAssets="all" />
         <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
             <_Parameter1>RimTalk.Tests</_Parameter1>
         </AssemblyAttribute>
@@ -40,7 +42,7 @@
     <!-- Use reference assemblies by default (for other users and CI) -->
     <ItemGroup Condition=" '$(UseLocalDlls)' != 'true' ">
         <!-- Core RimWorld & UnityEngine libraries -->
-        <PackageReference Include="Krafs.Rimworld.Ref" Version="$(GameVersion).*-*" PrivateAssets="All" />
+        <PackageReference Include="Krafs.Rimworld.Ref" Version="$(GameVersion).*-*" PrivateAssets="all" />
     </ItemGroup>
 
     <!-- Reference actual game assemblies when UseLocalDlls is enabled -->
@@ -91,6 +93,8 @@
         <Exec Command='rsync -a --delete --checksum "$(ProjectDir)Textures/"  "$(DeployPath)Textures/"'/>
         <Exec Command='rsync -a --delete --checksum "$(ProjectDir)$(GameVersion)/"       "$(DeployPath)$(GameVersion)/"'/>
         <Copy SourceFiles="$(ProjectDir)Libs/Scriban.dll" DestinationFolder="$(DeployPath)$(GameVersion)/Assemblies/" />
+        <!-- RimWorld 1.5 does not ship System.Net.Http. The 0 prefix makes it load before RimTalk.dll, whose types reference it. -->
+        <Copy SourceFiles="$(ProjectDir)Libs/1.5/System.Net.Http.dll" DestinationFiles="$(DeployPath)$(GameVersion)/Assemblies/0System.Net.Http.dll" Condition=" '$(GameVersion)' == '1.5' " />
         <Message Text="--- macOS deployment finished successfully ---" Importance="high"/>
     </Target>
 
@@ -110,6 +114,7 @@
         <Exec Command='robocopy "$(ProjectDir)Textures"  "$(WinModPath)Textures" /MIR' IgnoreExitCode="true"/>
         <Exec Command='robocopy "$(ProjectDir)$(GameVersion)"       "$(WinModPath)$(GameVersion)" /MIR' IgnoreExitCode="true"/>
         <Copy SourceFiles="$(ProjectDir)Libs/Scriban.dll" DestinationFolder="$(WinModPath)$(GameVersion)\Assemblies\" />
+        <Copy SourceFiles="$(ProjectDir)Libs/1.5/System.Net.Http.dll" DestinationFiles="$(WinModPath)$(GameVersion)\Assemblies\0System.Net.Http.dll" Condition=" '$(GameVersion)' == '1.5' " />
         <Message Text="--- Windows deployment finished successfully ---" Importance="high"/>
     </Target>
 

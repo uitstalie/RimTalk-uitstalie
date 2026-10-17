@@ -25,3 +25,6 @@ CLAUDE.md
 uitstalie/**/bin/
 uitstalie/**/obj/
 uitstalie/preset/**/*.log
+
+# ---- upstream: 本地个人规则 ----
+*.local.md

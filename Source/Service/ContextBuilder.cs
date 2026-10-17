@@ -447,7 +447,7 @@ public static class ContextBuilder
             bool inCombat = mainPawn.IsInCombat() || mainPawn.GetMapRole() == MapRole.Invading;
             bool hasActiveHostiles = inCombat && mainPawn.HasActiveHostiles();
             Pawn partner = pawns.Count > 1 ? pawns[0] == mainPawn ? pawns[1] : pawns[0] : null;
-            bool isStrangerEncounter = partner != null && IsStrangerEncounter(mainPawn, partner, pawns);
+            bool isStrangerEncounter = partner != null && EncounterTracker.IsStrangerEncounter(mainPawn, partner);
 
             if (inCombat)
             {
@@ -544,12 +544,12 @@ public static class ContextBuilder
             {
                 topicSb.Append("(downed in pain. Short, strained dialogue)");
             }
-            else if (talkRequest != null && talkRequest.Prompt != null)
+            else if (talkRequest.Prompt != null)
             {
                 topicSb.Append(talkRequest.Prompt);
             }
 
-            bool isMonologue = pawns.Count <= 1 || (talkRequest != null && talkRequest.IsMonologue);
+            bool isMonologue = pawns.Count <= 1 || (talkRequest.IsMonologue);
             string promptTopicDirective = null;
             string generalTopicKeywords = TopicService.ResolveTopicForRequest(talkRequest, mainPawn, isStrangerEncounter, isMonologue);
 
@@ -692,27 +692,6 @@ public static class ContextBuilder
     public static string Sanitize(string text, Pawn pawn = null)
     {
         return CommonUtil.Sanitize(text, pawn);
-    }
-
-    private static bool IsStrangerEncounter(Pawn mainPawn, Pawn partner, List<Pawn> pawns)
-    {
-        if (mainPawn == null || partner == null) return false;
-        try
-        {
-            if (!RelationsService.IsOutsiderOrStranger(mainPawn, partner)) return false;
-            if (mainPawn.GetMostImportantRelation(partner) != null) return false;
-            if (mainPawn.relations != null && mainPawn.relations.OpinionOf(partner) >= 20f) return false;
-            if (TalkHistory.GetHistoryCount(mainPawn) > 0 && TalkHistory.GetHistoryCount(partner) > 0)
-            {
-                var history = TalkHistory.GetMessageHistory(pawns, simplified: true);
-                if (history != null && history.Count > 0) return false;
-            }
-            return true;
-        }
-        catch (Exception)
-        {
-            return false;
-        }
     }
 
     private static bool TryBuildCombatSides(Pawn mainPawn, List<Pawn> pawns, out string combatSidesText)

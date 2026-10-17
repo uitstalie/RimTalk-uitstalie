@@ -18,12 +18,15 @@ public class RimTalkSettings : ModSettings
     public AIProvider SimpleProvider = AIProvider.Google;
     public string SimpleApiKey = "";
     public string SimplePlayer2ApiKey = "";
+    // Stable per-install id for the OpenCode gateway's x-opencode-session header.
+    public string OpenCodeSessionId = "";
     public bool IsUsingFallbackModel = false;
     public bool IsEnabled = true;
     public int TalkInterval = 10;
     public int ReplyInterval = 4;
     public bool ProcessNonRimTalkInteractions = true;
     public bool AllowSimultaneousConversations = false;
+    public bool HideServerErrorNotifications = false;
     public string SimpleModeInstruction = null;
     public string CustomInstruction = "";
     
@@ -214,13 +217,14 @@ public class RimTalkSettings : ModSettings
             if (config.IsValid())
             {
                 CurrentCloudConfigIndex = nextIndex;
-                Write(); // Save the updated index
+                // Called from the AI request thread; Scribe is global, so save from the main-thread tick queue
+                Error.AIErrorHandler.EnqueueMessage(Write); // Save the updated index
                 return;
             }
         }
         // If no other valid config is found, we stay at the current index or revert to original if it was valid
         // For now, we'll just stay at the current index.
-        Write(); // Save in case the original was invalid and we couldn't find a new one.
+        Error.AIErrorHandler.EnqueueMessage(Write); // Save in case the original was invalid and we couldn't find a new one.
     }
 
     /// <summary>
@@ -249,11 +253,16 @@ public class RimTalkSettings : ModSettings
         Scribe_Values.Look(ref SimpleProvider, "simpleProvider", AIProvider.Google);
         Scribe_Values.Look(ref SimpleApiKey, "simpleApiKey", "");
         Scribe_Values.Look(ref SimplePlayer2ApiKey, "simplePlayer2ApiKey", "");
+        Scribe_Values.Look(ref OpenCodeSessionId, "openCodeSessionId", "");
+        // Look resets a missing key to "", so generate here once; it is saved when settings are next written.
+        if (string.IsNullOrEmpty(OpenCodeSessionId))
+            OpenCodeSessionId = Guid.NewGuid().ToString("N").Substring(0, 8);
         Scribe_Values.Look(ref IsEnabled, "isEnabled", true);
         Scribe_Values.Look(ref TalkInterval, "talkInterval", 10);
         Scribe_Values.Look(ref ReplyInterval, "replyInterval", 4);
         Scribe_Values.Look(ref ProcessNonRimTalkInteractions, "processNonRimTalkInteractions", true);
         Scribe_Values.Look(ref AllowSimultaneousConversations, "allowSimultaneousConversations", false);
+        Scribe_Values.Look(ref HideServerErrorNotifications, "hideServerErrorNotifications", false);
         BubbleDisplayMode? savedMode = BubbleMode;
         Scribe_Values.Look(ref savedMode, "bubbleMode", null, true);
         if (Scribe.mode == LoadSaveMode.LoadingVars)

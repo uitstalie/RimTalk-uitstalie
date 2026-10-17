@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using RimTalk.Client.OpenAI;
 using RimTalk.Client.Player2;
 using RimTalk.Data;
+using RimTalk.Error;
 using RimTalk.UI;
 using RimWorld;
 using UnityEngine;
@@ -624,6 +625,8 @@ public partial class Settings
         AIProvider.AlibabaIntl,
         AIProvider.AlibabaCN,
         AIProvider.Moonshot,
+        AIProvider.OpenCodeZen,
+        AIProvider.OpenCodeGo,
         AIProvider.Google,
         AIProvider.Player2,
         AIProvider.Custom
@@ -759,6 +762,7 @@ public partial class Settings
                 11434 => "Ollama",
                 1234 => "LM Studio",
                 8080 => "llama.cpp",
+                9931 => "llama.cpp",
                 8000 => "vLLM",
                 5000 => "TextGen",
                 5001 => "KoboldCpp",
@@ -902,6 +906,7 @@ public partial class Settings
                     "http://localhost:11434",
                     "http://localhost:1234",
                     "http://localhost:8080",
+                    "http://localhost:9931",
                     "http://localhost:8000",
                     "http://localhost:5000",
                     "http://localhost:5001",
@@ -937,7 +942,7 @@ public partial class Settings
                     })
                     .ToList();
 
-                LongEventHandler.ExecuteWhenFinished(() =>
+                AIErrorHandler.EnqueueMessage(() =>
                 {
                     isScanningLocal = false;
                     if (activeServers.Count == 0)
@@ -955,7 +960,7 @@ public partial class Settings
             catch (Exception ex)
             {
                 Logger.Error($"Error scanning local endpoints: {ex.Message}");
-                LongEventHandler.ExecuteWhenFinished(() =>
+                AIErrorHandler.EnqueueMessage(() =>
                 {
                     isScanningLocal = false;
                     Messages.Message("RimTalk.Settings.LocalNotFound".Translate(), MessageTypeDefOf.RejectInput, false);
