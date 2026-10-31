@@ -39,9 +39,17 @@ public static class TalkService
         if (!SleepDialogueTracker.TryRefreshRequest(talkRequest)) return false;
 
         PawnState pawn1 = Cache.Get(talkRequest.Initiator);
-        if (!talkRequest.TalkType.IsFromUser() && (pawn1 == null || !pawn1.CanGenerateTalk())) return false;
+        bool isFromUser = talkRequest.TalkType.IsFromUser();
+        if (!isFromUser && (pawn1 == null || !pawn1.CanGenerateTalk())) return false;
         
-        if (!settings.AllowSimultaneousConversations && AnyPawnHasPendingResponses()) return false;
+        // User requests preempt the ongoing conversation, so the single-conversation gate applies to
+        // auto-generated talks only. The parent-ignored cascade doesn't doom lines whose parent was
+        // already spoken, so drop every pawn's leftover lines explicitly.
+        if (!settings.AllowSimultaneousConversations)
+        {
+            if (!isFromUser && AnyPawnHasPendingResponses()) return false;
+            if (isFromUser) IgnoreAllPendingResponses();
+        }
 
         // Ensure the recipient is valid and capable of talking.
         PawnState pawn2 = talkRequest.Recipient != null ? Cache.Get(talkRequest.Recipient) : null;
@@ -476,6 +484,12 @@ public static class TalkService
                 }
             }
         }
+    }
+
+    private static void IgnoreAllPendingResponses()
+    {
+        foreach (var pawnState in Cache.GetAll())
+            pawnState.IgnoreAllTalkResponses(PriorityTalkTypes);
     }
 
     private static bool AnyPawnHasPendingResponses()
