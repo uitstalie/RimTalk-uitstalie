@@ -499,7 +499,7 @@ public partial class Settings
         // Customize Button (OptionsGeneral Icon)
         Rect customRect = new Rect(customX, y, btnSize, height);
         var iconTexture = ContentFinder<Texture2D>.Get("UI/Icons/Options/OptionsGeneral");
-        bool hasCustom = !string.IsNullOrWhiteSpace(config.CustomRequestJson);
+        bool hasCustom = config.HasRequestOverrides;
         Color iconColor = hasCustom ? new Color(0.4f, 0.9f, 0.5f) : new Color(0.85f, 0.85f, 0.85f);
         Color mouseoverColor = hasCustom ? new Color(0.6f, 1f, 0.7f) : GenUI.MouseoverColor;
 
@@ -761,6 +761,7 @@ public partial class Settings
             {
                 11434 => "Ollama",
                 1234 => "LM Studio",
+                1235 => "LM Studio Bionic",
                 8080 => "llama.cpp",
                 9931 => "llama.cpp",
                 8000 => "vLLM",
@@ -868,7 +869,7 @@ public partial class Settings
         // Customize Button (gear icon)
         Rect customRect = new Rect(x, y + 2f, 22f, 22f);
         var iconTexture = ContentFinder<Texture2D>.Get("UI/Icons/Options/OptionsGeneral");
-        bool hasCustom = !string.IsNullOrWhiteSpace(config.CustomRequestJson);
+        bool hasCustom = config.HasRequestOverrides;
         Color iconColor = hasCustom ? new Color(0.4f, 0.9f, 0.5f) : new Color(0.85f, 0.85f, 0.85f);
         Color mouseoverColor = hasCustom ? new Color(0.6f, 1f, 0.7f) : GenUI.MouseoverColor;
 
@@ -905,6 +906,7 @@ public partial class Settings
                 [
                     "http://localhost:11434",
                     "http://localhost:1234",
+                    "http://localhost:1235",
                     "http://localhost:8080",
                     "http://localhost:9931",
                     "http://localhost:8000",
